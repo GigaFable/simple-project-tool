@@ -1,0 +1,84 @@
+{
+  "$id": "https://gigafable.com/schemas/mermaid-for-project.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the stage"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the stage"
+        },
+        "depends_on": {
+          "type": "array",
+          "description": "Titles of stages that this stage depends on completing first",
+          "items": { "type": "string" }
+        },
+        "stages": {
+          "type": "array",
+          "description": "Sub-stages within this stage (sequentially executed)",
+          "items": { "$ref": "#/$defs/stage" }
+        },
+        "parallel_stages": {
+          "type": "array",
+          "description": "Sub-stages within this stage (can be executed in parallel)",
+          "items": { "$ref": "#/$defs/stage" }
+        },
+        "milestone": {
+          "type": "boolean",
+          "default": false,
+          "description": "Indicates if this stage is a milestone"
+        },
+        "complete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Indicates if this stage is complete"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false,
+      "title": "Stage",
+      "description": "A stage in the project"
+    }
+  },
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The title of the project"
+    },
+    "description": {
+      "type": "string",
+      "description": "A description of the project"
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "Titles of stages that this stage depends on completing first",
+      "items": { "type": "string" }
+    },
+    "stages": {
+      "type": "array",
+      "description": "Sub-stages within the project (sequentially executed)",
+      "items": { "$ref": "#/$defs/stage" }
+    },
+    "parallel_stages": {
+      "type": "array",
+      "description": "Sub-stages within the project (can be executed in parallel)",
+      "items": { "$ref": "#/$defs/stage" }
+    },
+    "complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indicates if this project is complete"
+    }
+  },
+  "required": ["title"],
+  "title": "Project",
+  "description": "The main project stage, defined as the top-level object",
+  "anyOf": [{ "required": ["stages"] }, { "required": ["parallel_stages"] }],
+  "additionalProperties": false
+}
