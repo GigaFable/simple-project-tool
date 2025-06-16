@@ -29,6 +29,12 @@ parallel_stages:
                 description: Run tests to ensure the selected library works correctly with sample YAML files
           - title: Install the parser library
             description: Install the selected YAML parser library in the project environment
+  - title: Perform topological sort
+    description: Sort the stages and milestones in a topological order to prepare for flowchart generation
+    depends_on:
+      - Parse YAML
+    milestone: true
+
   - title: Generate Mermaid Syntax
     description: Convert the parsed data into Mermaid flowchart syntax
     milestone: true
