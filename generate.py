@@ -15,7 +15,6 @@ def parse_yaml(yaml_file):
 
     try:
         validate(instance=data, schema=schema)
-        print("YAML is valid according to the schema.")
         return data
     except ValidationError as e:
         print("YAML validation error:", e, file=sys.stderr)
@@ -41,6 +40,7 @@ def parse_yaml(yaml_file):
 
 def sort_stage(*, G, by_title, parent_stage, stage, parallel):
     by_title[stage["title"]] = stage
+    stage["parent"] = parent_stage
     G.add_node(stage["title"])
     if "depends_on" in stage:
         for dependency in stage["depends_on"]:
@@ -61,6 +61,7 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
             previous_stage = sub_stage
         if previous_stage is not None and parent_stage is not None:
             G.add_edge(previous_stage["title"], stage["title"])
+
     if "parallel_stages" in stage:
         for sub_stage in stage["parallel_stages"]:
             sort_stage(
@@ -77,21 +78,191 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
         stage["parallel"] = True
 
 
-def topological_sort(*, data):
+def topological_sort(*, project):
     G = nx.DiGraph()
     by_title = {}
     sort_stage(
         G=G,
         by_title=by_title,
         parent_stage=None,
-        stage=data,
+        stage=project,
         parallel=False,
     )
-    return list(nx.topological_sort(G))
+    # TODO: Test and handle failure caused by depending on a stage that is not defined
+    # TODO: Test and handle cycles in the graph
+    # TODO: Check that nothing depends on the project stage itself
+    return (
+        G,
+        by_title,
+        list(reversed([by_title[title] for title in nx.topological_sort(G)])),
+    )
+
+
+def is_leaf(stage):
+    return not ("parallel_stages" in stage or "stages" in stage)
+
+
+class AlphaLabelGenerator:
+    def __init__(self):
+        self.n = 1
+
+    def next(self):
+        label = self._number_to_label(self.n)
+        self.n += 1
+        return label
+
+    @staticmethod
+    def _number_to_label(n):
+        result = ""
+        while n > 0:
+            n, rem = divmod(n - 1, 26)
+            result = chr(rem + ord("A")) + result
+        return result
+
+
+class LeafRefGenerator:
+    def __init__(self, prefix):
+        self.n = 1
+        self.prefix = prefix
+
+    def next(self):
+        label = f"{self.prefix}{self.n}"
+        self.n += 1
+        return label
+
+
+def generate_mermaid_leaf_declaration(*, stage, leaf_ref_generator):
+    leaf_ref = leaf_ref_generator.next()
+    stage["leaf_ref"] = leaf_ref
+    if stage.get("milestone", False):
+        return f"    {leaf_ref}{{{{\"{stage['title']}\"}}}}"
+    else:
+        return f"    {leaf_ref}[\"{stage['title']}\"]"
+
+
+class SubGraph:
+    def __init__(self, *, stage, leaf_ref_generator, group_id):
+        self.stage = stage
+        self.group_id = group_id
+        self.head_id = f"{group_id}_head"
+        self.sub_stages = []
+        self.sub_graphs = []
+        self.leaf_ref_generator = leaf_ref_generator
+
+    def add_stage(self, stage):
+        self.sub_stages.append(stage)
+
+    def add_sub_graph(self, sub_graph):
+        self.sub_graphs.append(sub_graph)
+
+    def generate_mermaid_sub_graphs(self):
+        result = f"subgraph {self.stage['title']}\n"
+        if self.stage.get("milestone", False):
+            result += f"    {self.head_id}{{{{\"{self.stage['title']}\"}}}}\n"
+        else:
+            result += f"    {self.head_id}[\"{self.stage['title']}\"]\n"
+
+        for sub_graph in self.sub_graphs:
+            result += sub_graph.generate_mermaid_sub_graphs()
+        for stage in self.sub_stages:
+            result += (
+                generate_mermaid_leaf_declaration(
+                    stage=stage, leaf_ref_generator=self.leaf_ref_generator
+                )
+                + "\n"
+            )
+        result += "end\n"
+        return result
+
+    def __str__(self):
+        return f"SubGraph(title={self.stage}, stages={self.sub_stages})"
+
+
+def generate_mermaid(*, stages, G, by_title, project):
+    alpha_label_generator = AlphaLabelGenerator()
+    group_id_generator = LeafRefGenerator(prefix="Group_")
+    print("flowchart BT")
+    project = stages.pop(0)
+    project_title = project["title"]
+    print(f"    Project{{{{{project["title"]}}}}}")
+    print("style Project fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff")
+    flat_sub_graphs = []
+    flat_leaves = []
+    sub_graph = None
+    project_leaf_ref_generator = None
+    for stage in stages:
+        # Stage parents may not have been created yet so we need to delay
+        # both sub graphs and leaves until we have all the sub graphs
+        # created.
+
+        # YAML validation ensures every stage has a parent
+        if is_leaf(stage):
+            flat_leaves.append(stage)
+        else:
+            # Sub graph
+            sub_graph = SubGraph(
+                stage=stage,
+                leaf_ref_generator=LeafRefGenerator(alpha_label_generator.next()),
+                group_id=group_id_generator.next(),
+            )
+
+            stage["sub_graph"] = sub_graph
+
+            flat_sub_graphs.append(sub_graph)
+
+    for sub_graph in flat_sub_graphs:
+        for inner_sub_graph in flat_sub_graphs:
+            if sub_graph.stage["title"] == inner_sub_graph.stage["parent"]["title"]:
+                sub_graph.add_sub_graph(inner_sub_graph)
+
+    for leaf in flat_leaves:
+        if leaf["parent"]["title"] == project_title:
+            if project_leaf_ref_generator is None:
+                if project_leaf_ref_generator is None:
+                    project_leaf_ref_generator = LeafRefGenerator(
+                        prefix=alpha_label_generator.next()
+                    )
+            print(
+                generate_mermaid_leaf_declaration(
+                    stage=leaf, leaf_ref_generator=project_leaf_ref_generator
+                )
+            )
+        else:
+            for sub_graph in flat_sub_graphs:
+                if sub_graph.stage["title"] == leaf["parent"]["title"]:
+                    sub_graph.add_stage(leaf)
+                    break
+
+    for sub_graph in flat_sub_graphs:
+        if sub_graph.stage["parent"]["title"] == project_title:
+            print(sub_graph.generate_mermaid_sub_graphs())
+
+    # Output the edges
+    for sub_graph in flat_sub_graphs:
+        for required, requires in G.out_edges(sub_graph.stage["title"]):
+            requires_stage = by_title[requires]
+            required_stage_ref = sub_graph.head_id
+            if requires_stage["title"] == project["title"]:
+                print(f"{required_stage_ref} --> Project")
+            elif is_leaf(requires_stage):
+                print(f'{required_stage_ref} --> {requires_stage["leaf_ref"]}')
+            else:
+                print(f'{required_stage_ref} --> {requires_stage["sub_graph"].head_id}')
+
+    # Output the edges
+    for leaf in flat_leaves:
+        required_leaf_ref = leaf["leaf_ref"]
+        for required, requires in G.out_edges(leaf["title"]):
+            requires_stage = by_title[requires]
+            if requires_stage["title"] == project["title"]:
+                print(f"{required_leaf_ref} --> Project")
+            elif is_leaf(requires_stage):
+                print(f'{required_leaf_ref} --> {requires_stage["leaf_ref"]}')
+            else:
+                print(f'{required_leaf_ref} --> {requires_stage["sub_graph"].head_id}')
 
 
 if __name__ == "__main__":
-    data = parse_yaml(sys.argv[1] if len(sys.argv) > 1 else "project.yaml")
-    stage_titles = topological_sort(data=data)
-    for title in stage_titles:
-        print(title)
+    project = parse_yaml(sys.argv[1] if len(sys.argv) > 1 else "project.yaml")
+    G, by_title, stages = topological_sort(project=project)
+    generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)
