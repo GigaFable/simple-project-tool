@@ -97,7 +97,14 @@ def topological_sort(*, project, complete_is_tree):
         parallel=False,
     )
 
-    stages = list([by_title[title] for title in nx.topological_sort(G)])
+    stages = list(
+        [
+            by_title[title]
+            for title in nx.lexicographical_topological_sort(
+                G, key=lambda n: 1 if is_leaf(by_title[n]) else 0
+            )
+        ]
+    )
     for stage in stages:
         if complete_is_tree and stage.get("complete", False):
             for from_node, to_node in G.out_edges(stage["title"]):
