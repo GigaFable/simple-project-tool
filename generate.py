@@ -6,6 +6,8 @@ import networkx as nx
 import argparse
 from rich.console import Console
 
+INDENT_SPACES = 4
+
 
 def parse_yaml(yaml_file):
     yaml = YAML()
@@ -142,13 +144,16 @@ class LeafRefGenerator:
         return label
 
 
-def generate_mermaid_leaf_declaration(*, stage, leaf_ref_generator):
+def generate_mermaid_leaf_declaration(
+    *, stage, leaf_ref_generator, indentation_level=0
+):
+    indent = " " * (INDENT_SPACES * indentation_level)
     leaf_ref = leaf_ref_generator.next()
     stage["leaf_ref"] = leaf_ref
     if stage.get("milestone", False):
-        return f"    {leaf_ref}{{{{\"{stage['title']}\"}}}}"
+        return f"{indent}{leaf_ref}{{{{\"{stage['title']}\"}}}}"
     else:
-        return f"    {leaf_ref}[\"{stage['title']}\"]"
+        return f"{indent}{leaf_ref}[\"{stage['title']}\"]"
 
 
 class SubGraph:
@@ -166,23 +171,31 @@ class SubGraph:
     def add_sub_graph(self, sub_graph):
         self.sub_graphs.append(sub_graph)
 
-    def generate_mermaid_sub_graphs(self):
-        result = f"subgraph {self.stage['title']}\n"
+    def generate_mermaid_sub_graphs(self, *, indentation_level=0):
+        single_indent = " " * INDENT_SPACES
+        indent = " " * (INDENT_SPACES * indentation_level)
+        result = f"{indent}subgraph {self.stage['title']}\n"
         if self.stage.get("milestone", False):
-            result += f"    {self.head_id}{{{{\"{self.stage['title']}\"}}}}\n"
+            result += f"{indent}{single_indent}{self.head_id}{{{{\"{self.stage['title']}\"}}}}\n"
         else:
-            result += f"    {self.head_id}[\"{self.stage['title']}\"]\n"
+            result += (
+                f"{indent}{single_indent}{self.head_id}[\"{self.stage['title']}\"]\n"
+            )
 
         for sub_graph in self.sub_graphs:
-            result += sub_graph.generate_mermaid_sub_graphs()
+            result += sub_graph.generate_mermaid_sub_graphs(
+                indentation_level=indentation_level + 1
+            )
         for stage in self.sub_stages:
             result += (
                 generate_mermaid_leaf_declaration(
-                    stage=stage, leaf_ref_generator=self.leaf_ref_generator
+                    stage=stage,
+                    leaf_ref_generator=self.leaf_ref_generator,
+                    indentation_level=indentation_level + 1,
                 )
                 + "\n"
             )
-        result += "end\n"
+        result += f"{indent}end\n"
         return result
 
     def __str__(self):
@@ -195,8 +208,10 @@ def generate_mermaid(*, stages, G, by_title, project):
     print("flowchart BT")
     project = stages.pop(0)
     project_title = project["title"]
-    print(f"    Project{{{{{project["title"]}}}}}")
+    print(f"Project{{{{{project["title"]}}}}}")
+    print("")
     print("style Project fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff")
+    print("")
     flat_sub_graphs = []
     flat_leaves = []
     sub_graph = None
@@ -284,6 +299,8 @@ def generate_mermaid(*, stages, G, by_title, project):
                 print(f'{required_leaf_ref} --> {requires_stage["leaf_ref"]}')
             else:
                 print(f'{required_leaf_ref} --> {requires_stage["sub_graph"].head_id}')
+
+    print("")
 
     # Show complete stages in green
     for stage in stages:
