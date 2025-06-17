@@ -3,6 +3,8 @@ import sys
 from ruamel.yaml import YAML
 from jsonschema import validate, ValidationError
 import networkx as nx
+import argparse
+from rich.console import Console
 
 
 def parse_yaml(yaml_file):
@@ -273,6 +275,63 @@ def generate_mermaid(*, stages, G, by_title, project):
 
 
 if __name__ == "__main__":
-    project = parse_yaml(sys.argv[1] if len(sys.argv) > 1 else "project.yaml")
-    G, by_title, stages = topological_sort(project=project)
-    generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)
+    parser = argparse.ArgumentParser(description="Simple project tool")
+    parser.add_argument(
+        "yaml_file", nargs="?", default="project.yaml", help="YAML project file"
+    )
+    parser.add_argument(
+        "-o",
+        "--order-of-work",
+        action="store_true",
+        help="Output suggested order of work instead of Mermaid diagram",
+    )
+    args = parser.parse_args()
+
+    project = parse_yaml(args.yaml_file)
+
+    if args.order_of_work:
+        console = Console()
+        G, by_title, stages = topological_sort(project=project)
+        console.print("# Suggested order of work", style="bright_magenta")
+        console.print("")
+        counter = 1
+        for stage in reversed(stages[1:]):  # Exclude the project stage itself
+            if is_leaf(stage):
+                if stage.get("milestone", False):
+                    console.print(
+                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (milestone)',
+                        style="bright_cyan",
+                        highlight=False,
+                    )
+                else:
+                    console.print(
+                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]}',
+                        style="cyan",
+                        highlight=False,
+                    )
+            else:
+                if stage.get("milestone", False):
+                    console.print(
+                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group) (milestone)',
+                        style="bright_green",
+                        highlight=False,
+                    )
+                else:
+                    console.print(
+                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group)',
+                        style="green",
+                        highlight=False,
+                    )
+            counter += 1
+        console.print(
+            f'[bright_cyan]{counter}.[/bright_cyan] {stages[0]["title"]} (project)',
+            style="bright_magenta",
+            highlight=False,
+        )
+        console.print(f"\nTotal stages: {counter}", style="bright_yellow")
+    else:
+        # TODO: This could be replaced by validation as the resulting order of work
+        # is only relied upon for obtaining the project stage, which could be
+        # easily obtained differently
+        G, by_title, stages = topological_sort(project=project)
+        generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)
