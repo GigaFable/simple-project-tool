@@ -47,7 +47,7 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
             G.add_edge(dependency, stage["title"])
 
     if "stages" in stage:
-        previous_stage = None
+        previous_sub_stage = None
         for sub_stage in stage["stages"]:
             sort_stage(
                 G=G,
@@ -56,11 +56,11 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
                 stage=sub_stage,
                 parallel=False,
             )
-            if previous_stage is not None:
-                G.add_edge(previous_stage["title"], sub_stage["title"])
-            previous_stage = sub_stage
-        if previous_stage is not None and parent_stage is not None:
-            G.add_edge(previous_stage["title"], stage["title"])
+            if previous_sub_stage is not None:
+                G.add_edge(previous_sub_stage["title"], sub_stage["title"])
+            previous_sub_stage = sub_stage
+        if previous_sub_stage is not None:
+            G.add_edge(previous_sub_stage["title"], stage["title"])
 
     if "parallel_stages" in stage:
         for sub_stage in stage["parallel_stages"]:
@@ -197,6 +197,13 @@ def generate_mermaid(*, stages, G, by_title, project):
 
         # YAML validation ensures every stage has a parent
         if is_leaf(stage):
+            # Generate leaf ref here as patching it elsewhere
+            # did not work with certain structures.
+            if project_leaf_ref_generator is None:
+                project_leaf_ref_generator = LeafRefGenerator(
+                    prefix=alpha_label_generator.next()
+                )
+            stage["leaf_ref"] = project_leaf_ref_generator.next()
             flat_leaves.append(stage)
         else:
             # Sub graph
@@ -212,16 +219,15 @@ def generate_mermaid(*, stages, G, by_title, project):
 
     for sub_graph in flat_sub_graphs:
         for inner_sub_graph in flat_sub_graphs:
-            if sub_graph.stage["title"] == inner_sub_graph.stage["parent"]["title"]:
+            if (
+                "parent" in inner_sub_graph.stage
+                and inner_sub_graph.stage["parent"]
+                and sub_graph.stage["title"] == inner_sub_graph.stage["parent"]["title"]
+            ):
                 sub_graph.add_sub_graph(inner_sub_graph)
 
     for leaf in flat_leaves:
         if leaf["parent"]["title"] == project_title:
-            if project_leaf_ref_generator is None:
-                if project_leaf_ref_generator is None:
-                    project_leaf_ref_generator = LeafRefGenerator(
-                        prefix=alpha_label_generator.next()
-                    )
             print(
                 generate_mermaid_leaf_declaration(
                     stage=leaf, leaf_ref_generator=project_leaf_ref_generator
@@ -234,7 +240,11 @@ def generate_mermaid(*, stages, G, by_title, project):
                     break
 
     for sub_graph in flat_sub_graphs:
-        if sub_graph.stage["parent"]["title"] == project_title:
+        if (
+            "parent" in sub_graph.stage
+            and sub_graph.stage["parent"]
+            and sub_graph.stage["parent"]["title"] == project_title
+        ):
             print(sub_graph.generate_mermaid_sub_graphs())
 
     # Output the edges
