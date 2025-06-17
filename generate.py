@@ -97,12 +97,12 @@ def topological_sort(*, project, complete_is_tree):
         parallel=False,
     )
 
-    stages = list(reversed([by_title[title] for title in nx.topological_sort(G)]))
+    stages = list([by_title[title] for title in nx.topological_sort(G)])
     for stage in stages:
         if complete_is_tree and stage.get("complete", False):
-            for requires, required in G.in_edges(stage["title"]):
-                requires_stage = by_title[requires]
-                requires_stage["complete"] = True
+            for from_node, to_node in G.out_edges(stage["title"]):
+                to_node_stage = by_title[to_node]
+                to_node_stage["complete"] = True
 
     # TODO: Test and handle failure caused by depending on a stage that is not defined
     # TODO: Test and handle cycles in the graph
@@ -209,7 +209,6 @@ def generate_mermaid(*, stages, G, by_title, project):
     alpha_label_generator = AlphaLabelGenerator()
     group_id_generator = LeafRefGenerator(prefix="Group_")
     print("flowchart BT")
-    project = stages.pop(0)
     project_title = project["title"]
     print(f"Project{{{{{project["title"]}}}}}")
     print("")
@@ -281,27 +280,27 @@ def generate_mermaid(*, stages, G, by_title, project):
 
     # Output the edges
     for sub_graph in flat_sub_graphs:
-        for required, requires in G.out_edges(sub_graph.stage["title"]):
-            requires_stage = by_title[requires]
-            required_stage_ref = sub_graph.head_id
-            if requires_stage["title"] == project["title"]:
-                print(f"{required_stage_ref} --> Project")
-            elif is_leaf(requires_stage):
-                print(f'{required_stage_ref} --> {requires_stage["leaf_ref"]}')
+        for from_node, to_node in G.out_edges(sub_graph.stage["title"]):
+            to_stage_node = by_title[to_node]
+            from_node_ref = sub_graph.head_id
+            if to_stage_node["title"] == project["title"]:
+                print(f"{from_node_ref} --> Project")
+            elif is_leaf(to_stage_node):
+                print(f'{from_node_ref} --> {to_stage_node["leaf_ref"]}')
             else:
-                print(f'{required_stage_ref} --> {requires_stage["sub_graph"].head_id}')
+                print(f'{from_node_ref} --> {to_stage_node["sub_graph"].head_id}')
 
     # Output the edges
     for leaf in flat_leaves:
-        required_leaf_ref = leaf["leaf_ref"]
-        for required, requires in G.out_edges(leaf["title"]):
-            requires_stage = by_title[requires]
-            if requires_stage["title"] == project["title"]:
-                print(f"{required_leaf_ref} --> Project")
-            elif is_leaf(requires_stage):
-                print(f'{required_leaf_ref} --> {requires_stage["leaf_ref"]}')
+        from_leaf_ref = leaf["leaf_ref"]
+        for from_node, to_node in G.out_edges(leaf["title"]):
+            to_stage_node = by_title[to_node]
+            if to_stage_node["title"] == project["title"]:
+                print(f"{from_leaf_ref} --> Project")
+            elif is_leaf(to_stage_node):
+                print(f'{from_leaf_ref} --> {to_stage_node["leaf_ref"]}')
             else:
-                print(f'{required_leaf_ref} --> {requires_stage["sub_graph"].head_id}')
+                print(f'{from_leaf_ref} --> {to_stage_node["sub_graph"].head_id}')
 
     print("")
 
@@ -326,7 +325,7 @@ def order_of_work(*, project, complete_is_tree, incomplete_only):
     console.print("# Suggested order of work", style="bright_magenta")
     console.print("")
     counter = 0
-    for stage in reversed(stages[1:]):  # Exclude the project stage itself
+    for stage in stages[:-1]:  # Exclude the project stage itself
         if incomplete_only and stage.get("complete", False):
             continue
         counter += 1
@@ -361,10 +360,10 @@ def order_of_work(*, project, complete_is_tree, incomplete_only):
                     highlight=False,
                 )
     # Project stage
-    if not (incomplete_only and stages[0].get("complete", False)):
+    if not (incomplete_only and project.get("complete", False)):
         counter += 1
         console.print(
-            f'[bright_cyan]{counter}.[/bright_cyan] {stages[0]["title"]} (project)',
+            f'[bright_cyan]{counter}.[/bright_cyan] {project["title"]} (project)',
             style="bright_magenta",
             highlight=False,
         )
