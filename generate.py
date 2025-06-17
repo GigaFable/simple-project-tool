@@ -81,7 +81,7 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
         stage["parallel"] = True
 
 
-def topological_sort(*, project):
+def topological_sort(*, project, complete_is_tree):
     G = nx.DiGraph()
     by_title = {}
     sort_stage(
@@ -91,13 +91,21 @@ def topological_sort(*, project):
         stage=project,
         parallel=False,
     )
+
+    stages = list(reversed([by_title[title] for title in nx.topological_sort(G)]))
+    for stage in stages:
+        if complete_is_tree and stage.get("complete", False):
+            for requires, required in G.in_edges(stage["title"]):
+                requires_stage = by_title[requires]
+                requires_stage["complete"] = True
+
     # TODO: Test and handle failure caused by depending on a stage that is not defined
     # TODO: Test and handle cycles in the graph
     # TODO: Check that nothing depends on the project stage itself
     return (
         G,
         by_title,
-        list(reversed([by_title[title] for title in nx.topological_sort(G)])),
+        stages,
     )
 
 
@@ -181,7 +189,7 @@ class SubGraph:
         return f"SubGraph(title={self.stage}, stages={self.sub_stages})"
 
 
-def generate_mermaid(*, stages, G, by_title, project, complete_is_tree):
+def generate_mermaid(*, stages, G, by_title, project):
     alpha_label_generator = AlphaLabelGenerator()
     group_id_generator = LeafRefGenerator(prefix="Group_")
     print("flowchart BT")
@@ -194,19 +202,13 @@ def generate_mermaid(*, stages, G, by_title, project, complete_is_tree):
     sub_graph = None
     project_leaf_ref_generator = None
 
+    # Stage parents may not have been created yet so we need to delay
+    # both sub graphs and leaves until we have all the sub graphs
+    # created.
+
+    # An alternative would be to walk the project tree. This is good enough
+    # for now, but may not be the best solution in the future.
     for stage in stages:
-        if complete_is_tree and stage.get("complete", False):
-            for requires, required in G.in_edges(stage["title"]):
-                requires_stage = by_title[requires]
-                requires_stage["complete"] = True
-
-        # Stage parents may not have been created yet so we need to delay
-        # both sub graphs and leaves until we have all the sub graphs
-        # created.
-
-        # An alternative would be to walk the project tree. This is good enough
-        # for now, but may not be the best solution in the future.
-
         # YAML validation ensures every stage has a parent
         if is_leaf(stage):
             # Generate leaf ref here as patching it elsewhere
@@ -296,6 +298,59 @@ def generate_mermaid(*, stages, G, by_title, project, complete_is_tree):
                 )
 
 
+def order_of_work(*, project, complete_is_tree, incomplete_only):
+    console = Console()
+    G, by_title, stages = topological_sort(
+        project=project, complete_is_tree=complete_is_tree
+    )
+    console.print("# Suggested order of work", style="bright_magenta")
+    console.print("")
+    counter = 0
+    for stage in reversed(stages[1:]):  # Exclude the project stage itself
+        if incomplete_only and stage.get("complete", False):
+            continue
+        counter += 1
+        # TODO: We could use suffix and colour to remove the need for 4 print statements
+        suffix = ""
+        if stage.get("complete", False):
+            suffix = " ✅"
+        if is_leaf(stage):
+            if stage.get("milestone", False):
+                console.print(
+                    f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (milestone){suffix}',
+                    style="bright_cyan",
+                    highlight=False,
+                )
+            else:
+                console.print(
+                    f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]}{suffix}',
+                    style="cyan",
+                    highlight=False,
+                )
+        else:
+            if stage.get("milestone", False):
+                console.print(
+                    f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group) (milestone){suffix}',
+                    style="bright_green",
+                    highlight=False,
+                )
+            else:
+                console.print(
+                    f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group){suffix}',
+                    style="green",
+                    highlight=False,
+                )
+    # Project stage
+    if incomplete_only and not stages[0].get("complete", False):
+        counter += 1
+        console.print(
+            f'[bright_cyan]{counter}.[/bright_cyan] {stages[0]["title"]} (project)',
+            style="bright_magenta",
+            highlight=False,
+        )
+    console.print(f"\nTotal stages: {counter}", style="bright_yellow")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple project tool")
     parser.add_argument(
@@ -313,60 +368,32 @@ if __name__ == "__main__":
         action="store_true",
         help="Treat all stages required for a stage as completed if a stage is",
     )
+    parser.add_argument(
+        "-i",
+        "--incomplete-only",
+        action="store_true",
+        help="Only show incomplete stages in the order of work",
+    )
 
     args = parser.parse_args()
 
     project = parse_yaml(args.yaml_file)
 
     if args.order_of_work:
-        console = Console()
-        G, by_title, stages = topological_sort(project=project)
-        console.print("# Suggested order of work", style="bright_magenta")
-        console.print("")
-        counter = 1
-        for stage in reversed(stages[1:]):  # Exclude the project stage itself
-            if is_leaf(stage):
-                if stage.get("milestone", False):
-                    console.print(
-                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (milestone)',
-                        style="bright_cyan",
-                        highlight=False,
-                    )
-                else:
-                    console.print(
-                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]}',
-                        style="cyan",
-                        highlight=False,
-                    )
-            else:
-                if stage.get("milestone", False):
-                    console.print(
-                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group) (milestone)',
-                        style="bright_green",
-                        highlight=False,
-                    )
-                else:
-                    console.print(
-                        f'[bright_cyan]{counter}.[/bright_cyan] {stage["title"]} (group)',
-                        style="green",
-                        highlight=False,
-                    )
-            counter += 1
-        console.print(
-            f'[bright_cyan]{counter}.[/bright_cyan] {stages[0]["title"]} (project)',
-            style="bright_magenta",
-            highlight=False,
-        )
-        console.print(f"\nTotal stages: {counter}", style="bright_yellow")
-    else:
-        # TODO: This could be replaced by validation as the resulting order of work
-        # is only relied upon for obtaining the project stage, which could be
-        # easily obtained differently
-        G, by_title, stages = topological_sort(project=project)
-        generate_mermaid(
-            stages=stages,
-            G=G,
-            by_title=by_title,
+        order_of_work(
             project=project,
             complete_is_tree=args.complete_is_tree,
+            incomplete_only=args.incomplete_only,
         )
+    else:
+        if args.incomplete_only:
+            print("The --incomplete-only option is not supported for Mermaid output.")
+            sys.exit(1)
+        # TODO: This could be replaced by validation as the resulting order of work
+        # is only relied upon for obtaining the project stage, which could be
+        # easily obtained differently. If we do get rid of it, copy out the
+        # complete_is_tree logic.
+        G, by_title, stages = topological_sort(
+            project=project, complete_is_tree=args.complete_is_tree
+        )
+        generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)

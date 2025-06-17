@@ -4,9 +4,22 @@ description: >
   Other functionality may be added in the future, next up is outputting a suggested order of stages.
 parallel_stages:
   - title: Show completion of stages
+    milestone: true
+    complete: true
     description: >
       Display the completion status of each stage in the project by colouring
       stages green if they themselves or any parent node is marked as complete.
+    stages:
+      - title: Show every stage (including completed) (completion of stages)
+        description: >
+          Display every stage in the project, regardless of completion status.
+          This is useful for understanding the project structure.
+        complete: true
+      - title: Show incomplete stages only (completion of stages)
+        description: >
+          Display only the stages that are not marked as complete.
+          This helps focus on the work that still needs to be done.
+        complete: true
 stages:
   - title: Suggest order of stages
     description: Provide a suggested order of work based on the topological sort and dependencies
