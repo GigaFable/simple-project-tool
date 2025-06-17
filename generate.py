@@ -217,9 +217,10 @@ def generate_mermaid(*, stages, G, by_title, project):
     group_id_generator = LeafRefGenerator(prefix="Group_")
     print("flowchart BT")
     project_title = project["title"]
-    print(f"Project{{{{{project["title"]}}}}}")
+    #  A
+    print(f'Project(["{project["title"]}"])')
     print("")
-    print("style Project fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff")
+    print("style Project fill:#AC36BC,stroke:#333,stroke-width:2px,color:#fff")
     print("")
     flat_sub_graphs = []
     flat_leaves = []
@@ -314,13 +315,16 @@ def generate_mermaid(*, stages, G, by_title, project):
     # Show complete stages in green
     for stage in stages:
         if stage.get("complete", False):
-            if is_leaf(stage):
+            node_id = (
+                stage["leaf_ref"] if is_leaf(stage) else stage["sub_graph"].head_id
+            )
+            if stage.get("milestone", False):
                 print(
-                    f'style {stage["leaf_ref"]} fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff'
+                    f"style {node_id} fill:#7444EE,stroke:#333,stroke-width:2px,color:#fff"
                 )
             else:
                 print(
-                    f'style {stage["sub_graph"].head_id} fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff'
+                    f"style {node_id} fill:{"#047D08" if is_leaf(stage) else "#327E96"},stroke:#333,stroke-width:2px,color:#fff"
                 )
 
 
