@@ -1,10 +1,13 @@
+from io import StringIO
 import json
+import shutil
 import sys
 from ruamel.yaml import YAML
 from jsonschema import validate, ValidationError
 import networkx as nx
 import argparse
 from rich.console import Console
+from pathlib import Path
 
 INDENT_SPACES = 4
 
@@ -14,7 +17,7 @@ def parse_yaml(yaml_file):
     with open(yaml_file) as f:
         data = yaml.load(f)
 
-    with open("schema.json") as f:
+    with open(Path(__file__).parent / "schema.json") as f:
         schema = json.load(f)
 
     try:
@@ -391,17 +394,86 @@ if __name__ == "__main__":
         action="store_true",
         help="Only show incomplete stages in the order of work",
     )
+    parser.add_argument(
+        "-u",
+        "--update-yaml",
+        action="store_true",
+        help="Outputs an up to date YAML file. Use with --complete-is-tree to update the complete status of stages.",
+    )
 
     args = parser.parse_args()
 
     project = parse_yaml(args.yaml_file)
 
     if args.order_of_work:
+        if args.update_yaml:
+            print(
+                "The --update-yaml option is not supported with --order-of-work. "
+                "Use --complete-is-tree to update the complete status of stages.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         order_of_work(
             project=project,
             complete_is_tree=args.complete_is_tree,
             incomplete_only=args.incomplete_only,
         )
+    elif args.update_yaml:
+        if args.incomplete_only:
+            print("The --incomplete-only option is not supported for YAML update.")
+            sys.exit(1)
+        if args.order_of_work:
+            print(
+                "The --order-of-work option is not supported for YAML update. "
+                "Use --complete-is-tree to update the complete status of stages.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        if not args.complete_is_tree:
+            print(
+                "The --complete-is-tree option is required for YAML update.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        G, by_title, stages = topological_sort(
+            project=project, complete_is_tree=args.complete_is_tree
+        )
+        # Remove patched keys from stages
+        patched_keys = ["parent", "parallel"]
+        for stage in stages:
+            for key in patched_keys:
+                if key in stage:
+                    del stage[key]
+
+        yaml = YAML()
+        yaml.indent(mapping=2, sequence=4, offset=0)
+        stream = StringIO()
+        yaml.dump(project, stream)
+        yaml_string = stream.getvalue()
+        if shutil.which("prettier"):
+            # Use prettier to format the YAML
+            import subprocess
+
+            result = subprocess.run(
+                ["prettier", "--parser", "yaml"],
+                input=yaml_string.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+            )
+
+            if result.returncode != 0:
+                print(
+                    "Error formatting YAML with prettier:\n",
+                    result.stderr.decode(),
+                    file=sys.stderr,
+                )
+                sys.exit(2)
+
+            yaml_string = result.stdout.decode()
+
+        print(yaml_string)
+
     else:
         if args.incomplete_only:
             print("The --incomplete-only option is not supported for Mermaid output.")
