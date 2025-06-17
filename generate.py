@@ -361,7 +361,7 @@ def order_of_work(*, project, complete_is_tree, incomplete_only):
                     highlight=False,
                 )
     # Project stage
-    if incomplete_only and not stages[0].get("complete", False):
+    if not (incomplete_only and stages[0].get("complete", False)):
         counter += 1
         console.print(
             f'[bright_cyan]{counter}.[/bright_cyan] {stages[0]["title"]} (project)',
