@@ -1,7 +1,9 @@
 title: Simple Project Tool
 description: >
-  A tool to convert YAML data into a Mermaid flowchart representing project stages and milestones.
-  Other functionality may be added in the future, next up is outputting a suggested order of stages.
+  A tool to convert YAML data into a Mermaid flowchart representing project stages
+  and milestones.
+  Other functionality may be added in the future, next up is outputting a suggested
+  order of stages.
 parallel_stages:
   - title: Show completion of stages
     milestone: true
@@ -22,22 +24,29 @@ parallel_stages:
         complete: true
 stages:
   - title: Suggest order of stages
-    description: Provide a suggested order of work based on the topological sort and dependencies
+    description: Provide a suggested order of work based on the topological sort
+      and dependencies
     depends_on:
       - Perform topological sort
     milestone: true
     complete: true
     stages:
       - title: Give the order of work to stdout when requested
-        description: Generate a list of stages in the suggested order of execution
+        description: Generate a list of stages in the suggested order of
+          execution
+        complete: true
       - title: Convert generate.py to handle command line arguments
-        description: Modify the script to accept command line arguments for flexibility
+        description: Modify the script to accept command line arguments for
+          flexibility
+        complete: true
   - title: YAML to Mermaid Flowchart
     milestone: true
-    description: Convert YAML data describing a projects stages and milestones into a Mermaid flowchart
+    description: Convert YAML data describing a projects stages and milestones
+      into a Mermaid flowchart
     parallel_stages:
       - title: Parse YAML
-        description: Read and parse the YAML data to extract stages and milestones
+        description: Read and parse the YAML data to extract stages and
+          milestones
         milestone: true
         complete: true
         stages:
@@ -45,11 +54,18 @@ stages:
             description: Define the structure of the YAML data to be parsed
             stages:
               - title: Identify key elements
-                description: Determine the key elements that need to be included in the YAML structure
+                description: Determine the key elements that need to be included
+                  in the YAML structure
+                complete: true
               - title: Create YAML schema
-                description: Draft a schema that outlines the expected format of the YAML data
+                description: Draft a schema that outlines the expected format of
+                  the YAML data
+                complete: true
               - title: Validate YAML schema
-                description: Ensure the schema is correct and can be used to validate YAML files
+                description: Ensure the schema is correct and can be used to
+                  validate YAML files
+                complete: true
+            complete: true
           - title: Read YAML File
             description: Load the YAML file containing project data
             stages:
@@ -57,15 +73,26 @@ stages:
                 description: Find a suitable library to parse YAML files
                 stages:
                   - title: Research YAML parsers
-                    description: Look for libraries that can parse YAML in the chosen programming language
+                    description: Look for libraries that can parse YAML in the
+                      chosen programming language
+                    complete: true
                   - title: Select a parser library
-                    description: Choose a library based on features, performance, and ease of use
+                    description: Choose a library based on features,
+                      performance, and ease of use
+                    complete: true
                   - title: Test the parser library
-                    description: Run tests to ensure the selected library works correctly with sample YAML files
+                    description: Run tests to ensure the selected library works
+                      correctly with sample YAML files
+                    complete: true
+                complete: true
               - title: Install the parser library
-                description: Install the selected YAML parser library in the project environment
+                description: Install the selected YAML parser library in the
+                  project environment
+                complete: true
+            complete: true
       - title: Perform topological sort
-        description: Sort the stages and milestones in a topological order to prepare for flowchart generation
+        description: Sort the stages and milestones in a topological order to
+          prepare for flowchart generation
         depends_on:
           - Parse YAML
         milestone: true
@@ -77,18 +104,31 @@ stages:
         complete: true
         stages:
           - title: Define Mermaid Syntax
-            description: Outline the structure of the Mermaid flowchart syntax to be generated
+            description: Outline the structure of the Mermaid flowchart syntax
+              to be generated
             stages:
               - title: Identify flowchart elements
-                description: Determine the key elements that need to be represented in the flowchart
+                description: Determine the key elements that need to be
+                  represented in the flowchart
+                complete: true
               - title: Document Mermaid schema
-                description: Draft a schema that outlines the expected format of the Mermaid flowchart
+                description: Draft a schema that outlines the expected format of
+                  the Mermaid flowchart
+                complete: true
+            complete: true
           - title: Generate Flowchart Syntax
             depends_on:
               - Parse YAML
-            description: Convert the parsed YAML data into Mermaid flowchart syntax
+            description: Convert the parsed YAML data into Mermaid flowchart
+              syntax
             stages:
               - title: Map YAML data to Mermaid syntax
-                description: Create a mapping from YAML elements to Mermaid flowchart elements
+                description: Create a mapping from YAML elements to Mermaid
+                  flowchart elements
+                complete: true
               - title: Generate final Mermaid code
-                description: Produce the final Mermaid code based on the mapped data
+                description: Produce the final Mermaid code based on the mapped
+                  data
+                complete: true
+            complete: true
+
