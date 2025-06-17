@@ -44,6 +44,7 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
     by_title[stage["title"]] = stage
     stage["parent"] = parent_stage
     G.add_node(stage["title"])
+
     if "depends_on" in stage:
         for dependency in stage["depends_on"]:
             G.add_edge(dependency, stage["title"])
@@ -180,7 +181,7 @@ class SubGraph:
         return f"SubGraph(title={self.stage}, stages={self.sub_stages})"
 
 
-def generate_mermaid(*, stages, G, by_title, project):
+def generate_mermaid(*, stages, G, by_title, project, complete_is_tree):
     alpha_label_generator = AlphaLabelGenerator()
     group_id_generator = LeafRefGenerator(prefix="Group_")
     print("flowchart BT")
@@ -192,10 +193,19 @@ def generate_mermaid(*, stages, G, by_title, project):
     flat_leaves = []
     sub_graph = None
     project_leaf_ref_generator = None
+
     for stage in stages:
+        if complete_is_tree and stage.get("complete", False):
+            for requires, required in G.in_edges(stage["title"]):
+                requires_stage = by_title[requires]
+                requires_stage["complete"] = True
+
         # Stage parents may not have been created yet so we need to delay
         # both sub graphs and leaves until we have all the sub graphs
         # created.
+
+        # An alternative would be to walk the project tree. This is good enough
+        # for now, but may not be the best solution in the future.
 
         # YAML validation ensures every stage has a parent
         if is_leaf(stage):
@@ -273,6 +283,18 @@ def generate_mermaid(*, stages, G, by_title, project):
             else:
                 print(f'{required_leaf_ref} --> {requires_stage["sub_graph"].head_id}')
 
+    # Show complete stages in green
+    for stage in stages:
+        if stage.get("complete", False):
+            if is_leaf(stage):
+                print(
+                    f'style {stage["leaf_ref"]} fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff'
+                )
+            else:
+                print(
+                    f'style {stage["sub_graph"].head_id} fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff'
+                )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple project tool")
@@ -285,6 +307,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Output suggested order of work instead of Mermaid diagram",
     )
+    parser.add_argument(
+        "-c",
+        "--complete-is-tree",
+        action="store_true",
+        help="Treat all stages required for a stage as completed if a stage is",
+    )
+
     args = parser.parse_args()
 
     project = parse_yaml(args.yaml_file)
@@ -334,4 +363,10 @@ if __name__ == "__main__":
         # is only relied upon for obtaining the project stage, which could be
         # easily obtained differently
         G, by_title, stages = topological_sort(project=project)
-        generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)
+        generate_mermaid(
+            stages=stages,
+            G=G,
+            by_title=by_title,
+            project=project,
+            complete_is_tree=args.complete_is_tree,
+        )

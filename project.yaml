@@ -56,10 +56,12 @@ stages:
         depends_on:
           - Parse YAML
         milestone: true
+        complete: true
 
       - title: Generate Mermaid Syntax
         description: Convert the parsed data into Mermaid flowchart syntax
         milestone: true
+        complete: true
         stages:
           - title: Define Mermaid Syntax
             description: Outline the structure of the Mermaid flowchart syntax to be generated
