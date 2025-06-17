@@ -177,7 +177,7 @@ class SubGraph:
     def generate_mermaid_sub_graphs(self, *, indentation_level=0):
         single_indent = " " * INDENT_SPACES
         indent = " " * (INDENT_SPACES * indentation_level)
-        result = f"{indent}subgraph {self.stage['title']}\n"
+        result = f"{indent}subgraph \"{self.stage['title']}\"\n"
         if self.stage.get("milestone", False):
             result += f"{indent}{single_indent}{self.head_id}{{{{\"{self.stage['title']}\"}}}}\n"
         else:
