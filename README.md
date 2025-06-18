@@ -8,15 +8,13 @@ specialised viewer (such as
 for [VS Code](https://code.visualstudio.com/)). It also has the ability to
 suggest the order you do tasks (called stages by the utility) in.
 
-# Installation
+# Getting Started
 
-Installation requires [Python](https://www.python.org/). You can install python
-from the projects home page.
+This app requires [Python](https://www.python.org/). You can install python from
+the projects home page.
 
 Once you have python you need to setup a virtual environment and install the
 requirements like this (executed from this projects home directory):
-
-## Get Started
 
 ```bash
 python3 -m venv .venv
@@ -37,33 +35,42 @@ To deactivate the python virtual environment run
 deactivate
 ```
 
-You can now run `spt.py` to execute the program.
+You can now run `python spt.py` to test the program.
 
-## Optional install 1 (Not for Ubuntu/Debian)
+# Installation (Ubuntu/Debian)
 
-If you prefer, you can install the tool to your users environment so you don't
-have to deal with activating and deactivating the tool with:
+The recommended way to install this app is with `pipx`. You can do that as
+follows:
 
-```bash
-pip install --user setuptools
-pip install --user .
-```
-
-This assumes you have pip and python installed. You can refer to the python
-projects home page to get those installed.
-
-This will allow you to call the program as `spt` from your shell.
-
-## Optional install 2 (Ubuntu/Debian)
-
-On Ubuntu (and probably other debian based distros), the above doesn't work very
-well and gives a warning. You can install using `pipx` instead.
+## Ubuntu/Debian
 
 ```bash
 sudo apt install python3 pip pipx
 pipx install .
 pipx ensurepath
 . ~/.bashrc
+```
+
+## Windows
+
+If you installed python from the Windows store you can do this:
+
+```powershell
+python3 -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+Then restart your terminal session. If you are using another app to launch your
+terminal sessions you will need to restart that before restarting your terminal
+session. You can logout/login as an easy fix if the next stage fails due to not
+finding pipx.
+
+## After installing pipx
+
+From the project directory
+
+```bash
+pipx install .
 ```
 
 This will allow you to call the program as `spt` from your shell.
