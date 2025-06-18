@@ -1,8 +1,8 @@
 import sys
 import argparse
-from mermaid_utilities import generate_mermaid
-from order_of_work import order_of_work
-from yaml_utilities import parse_yaml, update_yaml
+from .mermaid_utilities import generate_mermaid
+from .order_of_work import order_of_work
+from .yaml_utilities import parse_yaml, update_yaml
 
 
 def main():

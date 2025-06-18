@@ -16,13 +16,12 @@ from the projects home page.
 Once you have python you need to setup a virtual environment and install the
 requirements like this (executed from this projects home directory):
 
-## Recommended method
+## Get Started
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-pip install .
 ```
 
 This will allow you to run the utility by calling `spt` whenever you activate
@@ -38,7 +37,9 @@ To deactivate the python virtual environment run
 deactivate
 ```
 
-## Alternative method 1
+You can now run `spt.py` to execute the program.
+
+## Optional install 1 (Not for Ubuntu/Debian)
 
 If you prefer, you can install the tool to your users environment so you don't
 have to deal with activating and deactivating the tool with:
@@ -51,7 +52,9 @@ pip install --user .
 This assumes you have pip and python installed. You can refer to the python
 projects home page to get those installed.
 
-## Alternative method 2 (Ubuntu/Debian)
+This will allow you to call the program as `spt` from your shell.
+
+## Optional install 2 (Ubuntu/Debian)
 
 On Ubuntu (and probably other debian based distros), the above doesn't work very
 well and gives a warning. You can install using `pipx` instead.
@@ -63,7 +66,12 @@ pipx ensurepath
 . ~/.bashrc
 ```
 
+This will allow you to call the program as `spt` from your shell.
+
 # Usage
+
+The following assumes you have installed `spt` into your shell. If you haven't,
+wherever it says `spt` replace the command with `python /path/to/spt.py`.
 
 To use the package in it's most basic form, invoke the command with:
 

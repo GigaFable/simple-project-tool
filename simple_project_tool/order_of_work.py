@@ -1,6 +1,6 @@
 from rich.console import Console
-from sort_utilities import topological_sort
-from general_utilities import is_leaf
+from .sort_utilities import topological_sort
+from .general_utilities import is_leaf
 
 
 def order_of_work(*, project, complete_is_tree, incomplete_only):

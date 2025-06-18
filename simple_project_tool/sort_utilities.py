@@ -1,5 +1,5 @@
 import networkx as nx
-from general_utilities import is_leaf
+from .general_utilities import is_leaf
 
 
 def sort_stage(*, G, by_title, parent_stage, stage, parallel):

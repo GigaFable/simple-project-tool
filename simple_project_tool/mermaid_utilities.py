@@ -1,10 +1,10 @@
-from general_utilities import (
+from .general_utilities import (
     is_leaf,
     AlphaLabelGenerator,
     NodeRefGenerator,
     INDENT_SPACES,
 )
-from sort_utilities import topological_sort
+from .sort_utilities import topological_sort
 
 
 def generate_mermaid_leaf_declaration(

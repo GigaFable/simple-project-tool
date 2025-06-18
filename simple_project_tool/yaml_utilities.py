@@ -6,7 +6,7 @@ from ruamel.yaml import YAML
 from jsonschema import validate, ValidationError
 from pathlib import Path
 
-from sort_utilities import topological_sort
+from .sort_utilities import topological_sort
 
 
 def parse_yaml(yaml_file):
