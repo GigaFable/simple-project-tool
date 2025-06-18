@@ -38,7 +38,7 @@ To deactivate the python virtual environment run
 deactivate
 ```
 
-## Alternative method
+## Alternative method 1
 
 If you prefer, you can install the tool to your users environment so you don't
 have to deal with activating and deactivating the tool with:
@@ -51,6 +51,18 @@ pip install --user .
 This assumes you have pip and python installed. You can refer to the python
 projects home page to get those installed.
 
+## Alternative method 2 (Ubuntu/Debian)
+
+On Ubuntu (and probably other debian based distros), the above doesn't work very
+well and gives a warning. You can install using `pipx` instead.
+
+```bash
+sudo apt install python3 pip pipx
+pipx install .
+pipx ensurepath
+. ~/.bashrc
+```
+
 # Usage
 
 To use the package in it's most basic form, invoke the command with:
@@ -59,8 +71,8 @@ To use the package in it's most basic form, invoke the command with:
 spt >project.mmd
 ```
 
-This will read project.yaml from the current directory and spit out a mermaid
-diagram to the file project.mmd.
+This will read `project.yaml` from the current directory and spit out a mermaid
+diagram to the file `project.mmd`.
 
 Another useful choice is:
 
@@ -71,7 +83,7 @@ spt -o # Suggests an order of work
 Which will output a suggested order of work for you to do, respecting stage
 dependencies.
 
-You can specify an alternative file to project.yaml on the command line by
+You can specify an alternative file to `project.yaml` on the command line by
 providing it as an argument to spt, such as:
 
 ```bash
@@ -89,9 +101,8 @@ spt --help
 # Configuration
 
 You define your project in YAML format. The syntax of YAML is beyond the scope
-of this document but you can get a feel for it by examining the included
-project.yaml, which was used to self-plan this tool. The project is defined at
-the root level with the following keys:
+of this document but you can get a feel for it with this example below. The
+project is defined at the root level with the following keys:
 
 ```yaml
 title: My Awesome Project # This is the only required key
@@ -115,3 +126,6 @@ output a mermaid diagram for you.
 That's basically it. Give it a try, generate that YAML as a mermaid diagram and
 you can expand upon it to define your project! Every stage can also have
 `stages` and/or `parallel_stages` keys of their own.
+
+You could also examine the included `project.yaml`, which was used to self-plan
+this tool to a working stage.
