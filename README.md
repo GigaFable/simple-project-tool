@@ -101,7 +101,7 @@ stages: # These stages each depend on the previous stage being completed
     description: This is more about the stage # Optional
   - title: Second required stage # to be completed after the first stage
     complete: true # Complete stages are filled with colour in the diagram
-    milestone: true # This stage
+    milestone: true # This stage looks different in the diagram
 parallel_stages: # These stages can be completed in any order
   - title: Required stage that can be executed in any order
   - title: Another stage, can be executed without finishing the previous stage
