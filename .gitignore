@@ -2,3 +2,5 @@
 *.pyc
 project.mmd
 .vscode/
+build/
+simple_project_tool.egg-info/

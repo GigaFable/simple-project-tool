@@ -381,7 +381,7 @@ def order_of_work(*, project, complete_is_tree, incomplete_only):
     console.print(f"\nTotal stages: {counter}", style="bright_yellow")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Simple project tool")
     parser.add_argument(
         "yaml_file", nargs="?", default="project.yaml", help="YAML project file"
@@ -496,3 +496,7 @@ if __name__ == "__main__":
             project=project, complete_is_tree=args.complete_is_tree
         )
         generate_mermaid(stages=stages, G=G, by_title=by_title, project=project)
+
+
+if __name__ == "__main__":
+    main()
