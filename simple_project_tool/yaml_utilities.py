@@ -58,12 +58,13 @@ def update_yaml(*, project, complete_is_tree):
     stream = StringIO()
     yaml.dump(project, stream)
     yaml_string = stream.getvalue()
-    if shutil.which("prettier"):
+    prettier_path = shutil.which("prettier")
+    if prettier_path:
         # Use prettier to format the YAML
         import subprocess
 
         result = subprocess.run(
-            ["prettier", "--parser", "yaml"],
+            [prettier_path, "--parser", "yaml"],
             input=yaml_string.encode(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
