@@ -49,7 +49,7 @@ pip install --user .
 ```
 
 This assumes you have pip and python installed. You can refer to the python
-projects home home page to get those installed.
+projects home page to get those installed.
 
 # Usage
 
