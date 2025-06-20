@@ -20,6 +20,7 @@ requirements like this (executed from this projects home directory):
 python3 -m venv .venv
 source .venv/bin/activate # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+pip install .
 ```
 
 This will allow you to run the utility by calling `spt` whenever you activate
@@ -130,6 +131,7 @@ stages: # These stages each depend on the previous stage being completed
     milestone: true # This stage looks different in the diagram
 parallel_stages: # These stages can be completed in any order
   - title: Required stage that can be executed in any order
+    priority: 1 # Higher numbered stages are prioritised in the work order
   - title: Another stage, can be executed without finishing the previous stage
     depends_on:
       - Second required stage # Second required stage must be completed first
@@ -137,6 +139,18 @@ parallel_stages: # These stages can be completed in any order
 
 If you copy and paste that into a YAML file then feed it to the tool it will
 output a mermaid diagram for you.
+
+## A little bit on the `priority` key
+
+Priorities work with higher numbers being assigned greater priority and that the
+stage with priority 1 (being the only priority set) is the highest priority task
+in the project.
+
+You don't really need to think about this but if you don't assign a priority to
+a stage it is treated as having priority `-1` if it's a stage with no sub-stages
+and `0` if it has sub-stages.
+
+---
 
 That's basically it. Give it a try, generate that YAML as a mermaid diagram and
 you can expand upon it to define your project! Every stage can also have

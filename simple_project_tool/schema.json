@@ -37,6 +37,10 @@
           "type": "boolean",
           "default": false,
           "description": "Indicates if this stage is complete"
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Gives this stage a priority, with bigger numbers being higher priority. By default, leaves are treated as -1 and groups are treated as 0. The order of work will prioritise reaching stages with higher priorities."
         }
       },
       "required": ["title"],

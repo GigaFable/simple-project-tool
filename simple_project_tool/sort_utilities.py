@@ -1,3 +1,4 @@
+import sys
 import networkx as nx
 from .general_utilities import is_leaf
 
@@ -43,18 +44,47 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
         stage["parallel"] = True
 
 
-def complete_tree(*, G, by_title, stage, complete):
-    if complete:
-        stage["complete"] = True
+# We always walk the tree to sort out priorities. We also take care of
+# complete_is_tree here.
+def walk_the_tree(*, G, by_title, stage, complete_is_tree):
+    """Walks the tree to set the `complete` flag for each stage based on its dependencies. Also takes care of priorities by marking any task further down the tree with the highest priority it's seen so far."""
+    stage_priority = stage.get("priority", None)
+    stage_complete = stage.get("complete", False)
+
     for from_node, to_node in G.in_edges(stage["title"]):
         from_node_stage = by_title[from_node]
-        complete_tree(
+        if stage_complete:
+            from_node_stage["complete"] = True
+
+        # Patch the priority as the highest seen so far in order to correctly
+        # prioritize the stages.
+        from_node_stage_priority = from_node_stage.get("priority", None)
+        if (stage_priority is not None) and (
+            (
+                (from_node_stage_priority is None)
+                or from_node_stage_priority < stage_priority
+            )
+        ):
+            from_node_stage["priority"] = stage_priority
+        walk_the_tree(
             G=G,
             by_title=by_title,
             stage=from_node_stage,
-            complete=from_node_stage.get("complete", False)
-            or stage.get("complete", False),
+            complete_is_tree=complete_is_tree,
         )
+
+
+def node_priority_for_sorting(*, node, by_title):
+    """Returns the priority for sorting nodes in topological sort."""
+    # If a custom priority is set, use it.
+    stage = by_title[node]
+    if "priority" in stage:
+        # Reverse the priority for sorting purposes, so that higher priority stages come first.
+        return -stage["priority"]
+
+    # If the node is a leaf, it has the lowest priority (1).
+    # Otherwise, it has a higher priority (0).
+    return 1 if is_leaf(node) else 0
 
 
 def topological_sort(*, project, complete_is_tree):
@@ -68,25 +98,27 @@ def topological_sort(*, project, complete_is_tree):
         parallel=False,
     )
 
+    # We always walk the tree to sort out priorities. We also take care of
+    # complete_is_tree here.
+    walk_the_tree(
+        G=G,
+        by_title=by_title,
+        stage=project,
+        complete_is_tree=complete_is_tree,
+    )
+    # TODO: Test and handle failure caused by depending on a stage that is not defined
+    # TODO: Test and handle cycles in the graph
+    # TODO: Check that nothing depends on the project stage itself
+
     stages = list(
         [
             by_title[title]
             for title in nx.lexicographical_topological_sort(
-                G, key=lambda n: 1 if is_leaf(by_title[n]) else 0
+                G, key=lambda n: node_priority_for_sorting(node=n, by_title=by_title)
             )
         ]
     )
 
-    if complete_is_tree:
-        complete_tree(
-            G=G,
-            by_title=by_title,
-            stage=project,
-            complete=project.get("complete", False),
-        )
-    # TODO: Test and handle failure caused by depending on a stage that is not defined
-    # TODO: Test and handle cycles in the graph
-    # TODO: Check that nothing depends on the project stage itself
     return (
         G,
         by_title,
