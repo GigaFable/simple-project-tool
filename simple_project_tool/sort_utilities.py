@@ -53,7 +53,7 @@ def walk_the_tree(*, G, by_title, stage, complete_is_tree):
 
     for from_node, to_node in G.in_edges(stage["title"]):
         from_node_stage = by_title[from_node]
-        if stage_complete:
+        if complete_is_tree and stage_complete:
             from_node_stage["complete"] = True
 
         # Patch the priority as the highest seen so far in order to correctly
