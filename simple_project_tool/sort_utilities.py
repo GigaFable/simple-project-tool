@@ -43,6 +43,20 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
         stage["parallel"] = True
 
 
+def complete_tree(*, G, by_title, stage, complete):
+    if complete:
+        stage["complete"] = True
+    for from_node, to_node in G.in_edges(stage["title"]):
+        from_node_stage = by_title[from_node]
+        complete_tree(
+            G=G,
+            by_title=by_title,
+            stage=from_node_stage,
+            complete=from_node_stage.get("complete", False)
+            or stage.get("complete", False),
+        )
+
+
 def topological_sort(*, project, complete_is_tree):
     G = nx.DiGraph()
     by_title = {}
@@ -62,12 +76,14 @@ def topological_sort(*, project, complete_is_tree):
             )
         ]
     )
-    for stage in stages:
-        if complete_is_tree and stage.get("complete", False):
-            for from_node, to_node in G.out_edges(stage["title"]):
-                to_node_stage = by_title[to_node]
-                to_node_stage["complete"] = True
 
+    if complete_is_tree:
+        complete_tree(
+            G=G,
+            by_title=by_title,
+            stage=project,
+            complete=project.get("complete", False),
+        )
     # TODO: Test and handle failure caused by depending on a stage that is not defined
     # TODO: Test and handle cycles in the graph
     # TODO: Check that nothing depends on the project stage itself
