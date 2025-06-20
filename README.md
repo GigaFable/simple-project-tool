@@ -8,6 +8,31 @@ specialised viewer (such as
 for [VS Code](https://code.visualstudio.com/)). It also has the ability to
 suggest the order you do tasks (called stages by the utility) in.
 
+# Downloading (Common)
+
+You need git to download this project. (Technically you don't, but it's the easy
+way).
+
+Head on over to [the git homepage](https://git-scm.com/downloads) for install
+instructions.
+
+## Once you've installed gi
+
+From your terminal (Linux or Windows PowerShell) type:
+
+```bash
+cd ~
+git clone https://github.com/GigaFable/simple-project-tool.git
+cd simple-project-tool
+```
+
+The above will make a clone of the repository and put it in your home directory.
+You can also use a GUI git client of your choice to download the repository:
+
+```text
+https://github.com/GigaFable/simple-project-tool.git
+```
+
 # Installation (Ubuntu/Debian)
 
 The recommended way to install this app is with `pipx`. You can do that as
@@ -17,12 +42,12 @@ follows:
 
 ```bash
 sudo apt install python3 pip pipx
-pipx install .
+pipx install . # From within simple-project-tool directory
 pipx ensurepath
 . ~/.bashrc
 ```
 
-# Installation (Windows )
+# Installation (Windows)
 
 If you installed python from the Windows store you can do this:
 
@@ -36,9 +61,9 @@ terminal sessions you will need to restart that before restarting your terminal
 session. You can logout/login as an easy fix if the next stage fails due to not
 finding pipx.
 
-## After installing pipx
+## After installing pipx (Windows)
 
-From the spt repository directory
+From within the simple-project-tool repository directory
 
 ```bash
 pipx install .
