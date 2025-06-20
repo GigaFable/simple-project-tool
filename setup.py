@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="simple-project-tool",
-    version="1.0.0",
+    version="1.0.2",
     packages=["simple_project_tool"],
     include_package_data=True,
     package_data={

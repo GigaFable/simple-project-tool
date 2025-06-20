@@ -8,7 +8,45 @@ specialised viewer (such as
 for [VS Code](https://code.visualstudio.com/)). It also has the ability to
 suggest the order you do tasks (called stages by the utility) in.
 
-# Getting Started
+# Installation (Ubuntu/Debian)
+
+The recommended way to install this app is with `pipx`. You can do that as
+follows:
+
+## Ubuntu/Debian
+
+```bash
+sudo apt install python3 pip pipx
+pipx install .
+pipx ensurepath
+. ~/.bashrc
+```
+
+# Installation (Windows )
+
+If you installed python from the Windows store you can do this:
+
+```powershell
+python3 -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+Then restart your terminal session. If you are using another app to launch your
+terminal sessions you will need to restart that before restarting your terminal
+session. You can logout/login as an easy fix if the next stage fails due to not
+finding pipx.
+
+## After installing pipx
+
+From the spt repository directory
+
+```bash
+pipx install .
+```
+
+This will allow you to call the program as `spt` from your shell.
+
+# More Advanced Setup (skip this section if you used pipx)
 
 This app requires [Python](https://www.python.org/). You can install python from
 the projects home page.
@@ -37,44 +75,6 @@ deactivate
 ```
 
 You can now run `python spt.py` to test the program.
-
-# Installation (Ubuntu/Debian)
-
-The recommended way to install this app is with `pipx`. You can do that as
-follows:
-
-## Ubuntu/Debian
-
-```bash
-sudo apt install python3 pip pipx
-pipx install .
-pipx ensurepath
-. ~/.bashrc
-```
-
-## Windows
-
-If you installed python from the Windows store you can do this:
-
-```powershell
-python3 -m pip install --user pipx
-python -m pipx ensurepath
-```
-
-Then restart your terminal session. If you are using another app to launch your
-terminal sessions you will need to restart that before restarting your terminal
-session. You can logout/login as an easy fix if the next stage fails due to not
-finding pipx.
-
-## After installing pipx
-
-From the project directory
-
-```bash
-pipx install .
-```
-
-This will allow you to call the program as `spt` from your shell.
 
 # Usage
 
