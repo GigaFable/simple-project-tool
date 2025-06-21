@@ -16,14 +16,13 @@ way).
 Head on over to [the git homepage](https://git-scm.com/downloads) for install
 instructions.
 
-## Once you've installed gi
+## Once you've installed git
 
 From your terminal (Linux or Windows PowerShell) type:
 
 ```bash
 cd ~
 git clone https://github.com/GigaFable/simple-project-tool.git
-cd simple-project-tool
 ```
 
 The above will make a clone of the repository and put it in your home directory.
@@ -31,6 +30,17 @@ You can also use a GUI git client of your choice to download the repository:
 
 ```text
 https://github.com/GigaFable/simple-project-tool.git
+```
+
+# Upgrading from a previous version
+
+If you installed the recommended way, first update your git repository to the
+latest version
+
+```bash
+cd ~/simple-project-tool # Or wherever you put it
+git pull # Fetches updates from GitHub
+pipx upgrade simple-project-tool # Upgrades locally installed version
 ```
 
 # Installation (Ubuntu/Debian)
@@ -41,10 +51,11 @@ follows:
 ## Ubuntu/Debian
 
 ```bash
-sudo apt install python3 pip pipx
+sudo apt install python3 pip pipx # You need these packages
+cd ~/simple-project-tool # Or wherever you put it
 pipx install . # From within simple-project-tool directory
-pipx ensurepath
-. ~/.bashrc
+pipx ensurepath # Adds the right PATH to bashrc
+. ~/.bashrc # Runs .bashrc in the context of the shell
 ```
 
 # Installation (Windows)

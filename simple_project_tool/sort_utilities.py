@@ -51,6 +51,10 @@ def walk_the_tree(*, G, by_title, stage, complete_is_tree, updating_yaml):
     stage_complete = stage.get("complete", False)
 
     for from_node, to_node in G.in_edges(stage["title"]):
+        if not from_node in by_title:
+            raise ValueError(
+                f"Node '{from_node}' not found. This indicates a dependency on a stage that is not defined."
+            )
         from_node_stage = by_title[from_node]
         if complete_is_tree and stage_complete:
             from_node_stage["complete"] = True
