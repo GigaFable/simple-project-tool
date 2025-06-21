@@ -72,7 +72,7 @@ def generate_mermaid(*, project, complete_is_tree):
     # easily obtained differently. If we do get rid of it, copy out the
     # complete_is_tree logic.
     G, by_title, stages = topological_sort(
-        project=project, complete_is_tree=complete_is_tree
+        project=project, complete_is_tree=complete_is_tree, updating_yaml=False
     )
 
     alpha_label_generator = AlphaLabelGenerator()

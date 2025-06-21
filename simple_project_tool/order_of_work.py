@@ -6,7 +6,7 @@ from .general_utilities import is_leaf
 def order_of_work(*, project, complete_is_tree, incomplete_only):
     console = Console()
     G, by_title, stages = topological_sort(
-        project=project, complete_is_tree=complete_is_tree
+        project=project, complete_is_tree=complete_is_tree, updating_yaml=False
     )
     console.print("# Suggested order of work", style="bright_magenta")
     console.print("")

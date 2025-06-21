@@ -44,7 +44,7 @@ def parse_yaml(yaml_file):
 
 def update_yaml(*, project, complete_is_tree):
     G, by_title, stages = topological_sort(
-        project=project, complete_is_tree=complete_is_tree
+        project=project, complete_is_tree=complete_is_tree, updating_yaml=True
     )
     # Remove patched keys from stages
     patched_keys = ["parent", "parallel"]

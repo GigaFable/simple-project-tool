@@ -46,9 +46,8 @@ def sort_stage(*, G, by_title, parent_stage, stage, parallel):
 
 # We always walk the tree to sort out priorities. We also take care of
 # complete_is_tree here.
-def walk_the_tree(*, G, by_title, stage, complete_is_tree):
+def walk_the_tree(*, G, by_title, stage, complete_is_tree, updating_yaml):
     """Walks the tree to set the `complete` flag for each stage based on its dependencies. Also takes care of priorities by marking any task further down the tree with the highest priority it's seen so far."""
-    stage_priority = stage.get("priority", None)
     stage_complete = stage.get("complete", False)
 
     for from_node, to_node in G.in_edges(stage["title"]):
@@ -58,19 +57,22 @@ def walk_the_tree(*, G, by_title, stage, complete_is_tree):
 
         # Patch the priority as the highest seen so far in order to correctly
         # prioritize the stages.
-        from_node_stage_priority = from_node_stage.get("priority", None)
-        if (stage_priority is not None) and (
-            (
-                (from_node_stage_priority is None)
-                or from_node_stage_priority < stage_priority
-            )
-        ):
-            from_node_stage["priority"] = stage_priority
+        if not updating_yaml:
+            stage_priority = stage.get("priority", None)
+            from_node_stage_priority = from_node_stage.get("priority", None)
+            if (stage_priority is not None) and (
+                (
+                    (from_node_stage_priority is None)
+                    or from_node_stage_priority < stage_priority
+                )
+            ):
+                from_node_stage["priority"] = stage_priority
         walk_the_tree(
             G=G,
             by_title=by_title,
             stage=from_node_stage,
             complete_is_tree=complete_is_tree,
+            updating_yaml=updating_yaml,
         )
 
 
@@ -87,7 +89,7 @@ def node_priority_for_sorting(*, node, by_title):
     return 1 if is_leaf(node) else 0
 
 
-def topological_sort(*, project, complete_is_tree):
+def topological_sort(*, project, complete_is_tree, updating_yaml):
     G = nx.DiGraph()
     by_title = {}
     sort_stage(
@@ -105,6 +107,7 @@ def topological_sort(*, project, complete_is_tree):
         by_title=by_title,
         stage=project,
         complete_is_tree=complete_is_tree,
+        updating_yaml=updating_yaml,
     )
     # TODO: Test and handle failure caused by depending on a stage that is not defined
     # TODO: Test and handle cycles in the graph
